@@ -3,12 +3,12 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'pip3 install -r requirements.txt'
+                sh 'echo TODO'
             }
         }
         stage('Test') {
             steps {
-                sh 'python3 -m unittest'
+                sh 'py.test --junitxml test-reports/results.xml'
             }
             post {
                 always {
