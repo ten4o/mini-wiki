@@ -95,12 +95,19 @@ class TestDb(unittest.TestCase):
         # the result must be an empty list
         self.assertEqual(len(topic_list), 0)
 
+        # check that escaping works
+        topic_list = TestDb.db.get_topic_list(title = '%_', body = None)
+        self.assertEqual(len(topic_list), 0)
+        topic_list = TestDb.db.get_topic_list(title = '%', body = None)
+        self.assertEqual(len(topic_list), 0)
+        topic_list = TestDb.db.get_topic_list(title = '__', body = None)
+        self.assertEqual(len(topic_list), 0)
+
+
     @classmethod
     def setUpClass(cls):
-        print('==================== setUpClass')
         cls.db = db.DB(is_test=True)
 
     @classmethod
     def tearDownClass(cls):
-        print('==================== tearDownClass')
         cls.db.drop_all()

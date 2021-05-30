@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, Sequence, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.schema import ForeignKey, Table
 
@@ -119,7 +119,6 @@ class DB:
             return session.query(Topic).filter(Topic.title == title).first()
 
     def get_topic_list(self, title: str, body: str) -> list[Topic]:
-        # TODO escape_like(title) and escape_list(body)
         """Search a topic by substring in the title and substring in the body
 
         Args:
@@ -132,7 +131,7 @@ class DB:
         with Session(self.engine) as session:
             criterion = []
             if title:
-                criterion.append(Topic.title.contains(title))
+                criterion.append(Topic.title.contains(title, autoescape=True))
             if body:
-                criterion.append(Topic.body.contains(body))
+                criterion.append(Topic.body.contains(body, autoescape=True))
             return session.query(Topic).filter(*criterion).all()
