@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/test_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres_TEST
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+  web:
+    build: .
+    command: python -m unittest
+    volumes:
+      - .:/home/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db/postgres
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    # stdin_open: true # docker run -i
+    # tty: true        # docker run -t
+
