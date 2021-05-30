@@ -33,7 +33,7 @@ class Topic(Base):
 
     def __repr__(self):
         tag_list = '[{}]'.format(','.join([tag.name for tag in self.tags]))
-        return f'Topic(id:{self.id} title:{self.title} [{len(self.tags)}] {tag_list})'
+        return f'Topic(id:{self.id} title:"{self.title}" body:"{self.body[:10]}" [{len(self.tags)}] {tag_list})'
 
 
 class Tag(Base):
@@ -117,3 +117,22 @@ class DB:
         """
         with Session(self.engine) as session:
             return session.query(Topic).filter(Topic.title == title).first()
+
+    def get_topic_list(self, title: str, body: str) -> list[Topic]:
+        # TODO escape_like(title) and escape_list(body)
+        """Search a topic by substring in the title and substring in the body
+
+        Args:
+            title(str): a substring to search for in the title (Node: whitespace is not considered)
+            body(str): a substring to search for in the body
+
+        Returns:
+            list[Topic]: list of topic objects or [] if nothing found
+        """
+        with Session(self.engine) as session:
+            criterion = []
+            if title:
+                criterion.append(Topic.title.contains(title))
+            if body:
+                criterion.append(Topic.body.contains(body))
+            return session.query(Topic).filter(*criterion).all()
