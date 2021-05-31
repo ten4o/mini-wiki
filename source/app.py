@@ -71,8 +71,18 @@ def insert_article():
 
     if err_msg:
         return template('new_article', err_msg=err_msg, body=body)
-    return template('inserted_article', title=title)
+    return template('inserted_article', title=title, article_id=article_id)
 
+@get('/view/<article_id:int>')
+def view_article(article_id):
+    article = g_db.get_topic_by_id(article_id)
+    if article is None:
+        title = f'Article with id {article_id} was not found.'
+        body = ''
+    else:
+        title = article.title
+        body = article.body
+    return template('view_article', title=title, body=body)
 
 if __name__ == '__main__':
     print(WWW_ROOT)
