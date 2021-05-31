@@ -73,6 +73,7 @@ def insert_article():
         return template('new_article', err_msg=err_msg, body=body)
     return template('inserted_article', title=title, article_id=article_id)
 
+
 @get('/view/<article_id:int>')
 def view_article(article_id):
     article = g_db.get_topic_by_id(article_id)
@@ -83,6 +84,15 @@ def view_article(article_id):
         title = article.title
         body = article.body
     return template('view_article', title=title, body=body)
+
+
+@get('/search')
+def search_articles():
+    title = request.GET.get('title', '').strip()
+    body = request.GET.get('body', '').strip()
+    article_list = g_db.get_topic_list(title, body)
+    return template('article_list', article_list=article_list)
+
 
 if __name__ == '__main__':
     print(WWW_ROOT)
