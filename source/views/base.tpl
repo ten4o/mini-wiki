@@ -34,6 +34,11 @@
                     </div>
                 </form>
             </div>
+            <div class="col-2 align-items-center d-flex">
+                <a href="/new" class="btn btn-primary">
+                    New Article
+                </a>
+            </div>
         </div>
         <div class="row"><hr></div>
         {{!base}}
