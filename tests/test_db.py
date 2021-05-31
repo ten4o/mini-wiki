@@ -1,4 +1,5 @@
 from source import db
+from source.db import DuplicateTitleException
 import unittest
 
 
@@ -27,6 +28,19 @@ class TestDb(unittest.TestCase):
     def test_insert_long_tag(self):
         self.assertRaises(ValueError,
                           TestDb.db.insert_topic, 'title long tag', 'body', ['g' * (db.MAX_TAG_SIZE + 1), 'tag2'])
+
+    def test_insert_dup_title(self):
+        title = 'title test_insert_dup_title'
+        body = 'body 2'
+        tag_list = ['tag1', 'tag3']
+
+        TestDb.db.insert_topic(title, body, tag_list)
+        try:
+            TestDb.db.insert_topic(title, body, tag_list)
+            self.assertFalse(True)
+        except DuplicateTitleException:
+            pass
+
 
     def test_insert_dup_tags(self):
         title = 'title 2'

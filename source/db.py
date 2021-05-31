@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.schema import ForeignKey, Table
+from sqlalchemy.exc import IntegrityError
 
 from os import environ
 
@@ -51,6 +52,10 @@ class Tag(Base):
         return f'Tag(id:{self.id}  name:{self.name})'
 
 
+class DuplicateTitleException(Exception):
+    pass
+
+
 class DB:
     def __init__(self, is_test: bool = False):
         db_url = environ.get('DATABASE_URL')
@@ -82,16 +87,19 @@ class DB:
             if len(tag) > MAX_TAG_SIZE:
                 raise ValueError('tag name is too long')
 
-        with Session(self.engine) as session:
-            topic = Topic(title, body)
-            db_tags = {tag.name: tag for tag in session.query(
-                Tag).filter(Tag.name.in_(tag_list)).all()}
-            db_tags.update({tag_name: Tag(tag_name)
-                           for tag_name in tag_list if tag_name not in db_tags})
-            topic.tags.extend(db_tags.values())
-            session.add(topic)
-            session.commit()
-            return topic.id
+        try:
+            with Session(self.engine) as session:
+                topic = Topic(title, body)
+                db_tags = {tag.name: tag for tag in session.query(
+                    Tag).filter(Tag.name.in_(tag_list)).all()}
+                db_tags.update({tag_name: Tag(tag_name)
+                            for tag_name in tag_list if tag_name not in db_tags})
+                topic.tags.extend(db_tags.values())
+                session.add(topic)
+                session.commit()
+                return topic.id
+        except IntegrityError:
+            raise DuplicateTitleException
 
     def get_topic_by_id(self, topic_id: int) -> Topic:
         """Search a topic by DB id
