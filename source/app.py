@@ -1,5 +1,6 @@
 from gevent import monkey; monkey.patch_all()
 
+import markdown
 import os
 import db
 from bottle import get, post, request, run, static_file, template, TEMPLATE_PATH
@@ -54,8 +55,10 @@ def insert_article():
     err_msg = None
     if title and body:
         try:
-            tid = g_db.insert_topic(title, body, [])
-            print(f'article id = {tid}')
+            # TODO sanitize body to prevent XSS
+            html_body = markdown.markdown(body)
+            article_id = g_db.insert_topic(title, html_body, [])
+            print(f'article id = {article_id}')
         except ValueError as ve:
             err_msg = ve.args[0]
         except db.DuplicateTitleException:
