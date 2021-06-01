@@ -59,7 +59,7 @@ class TestDb(unittest.TestCase):
     def test_get_by_name(self):
         title = 'title 3'
         body = 'body 2'
-        tag_list = ['tag1', 'tag3']
+        tag_list = ['tag4', 'tag3']
         topic_id = TestDb.db.insert_topic(title, body, tag_list)
         self.assertIsNotNone(topic_id, 'There must be an insert id')
         topic = TestDb.db.get_topic_by_title(title)
@@ -102,7 +102,6 @@ class TestDb(unittest.TestCase):
         self.assertEqual(len(topic_list), 1)
         self.assertTopic(topic_list[0], titles[0], body[0], tag_list[:2])
 
-
         # search of non-existing topic
         topic_list = TestDb.db.get_topic_list(title = 'None-existing', body = None)
 
@@ -117,6 +116,17 @@ class TestDb(unittest.TestCase):
         topic_list = TestDb.db.get_topic_list(title = '__', body = None)
         self.assertEqual(len(topic_list), 0)
 
+        # search by a list of tags
+
+        topic_list = TestDb.db.get_topic_list(None, None, ['tag1','tag2', 'tag3', 'tag4'])
+        self.assertIsNotNone(topic_list)
+        self.assertEqual(len(topic_list), 1)
+        self.assertTopic(topic_list[0], titles[2], body[2], tag_list[:4])
+
+        topic_list = TestDb.db.get_topic_list(None, None, ['tag1','tag3'])
+        self.assertIsNotNone(topic_list)
+        self.assertEqual(len(topic_list), 2)
+
 
     @classmethod
     def setUpClass(cls):
@@ -125,3 +135,4 @@ class TestDb(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.db.drop_all()
+        pass

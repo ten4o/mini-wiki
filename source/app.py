@@ -2,6 +2,7 @@ from gevent import monkey; monkey.patch_all()
 
 import markdown
 import os
+import re
 import db
 from bottle import get, post, request, run, static_file, template, TEMPLATE_PATH
 
@@ -9,6 +10,9 @@ WWW_ROOT = os.getenv('WWW_ROOT') or os.path.dirname(__file__)
 
 # make sure the template engine can find our views
 TEMPLATE_PATH.append(f'{WWW_ROOT}/views')
+
+# list of tag delimiters: | , ; - or white space
+TAG_DELIMITER_RE = re.compile(r'[|,;\-\s]')
 
 g_db = db.DB()
 
@@ -52,13 +56,19 @@ def get_new_article_page():
 def insert_article():
     title = request.POST.get('title', '').strip()
     body = request.POST.get('body', '').strip()
+    tag_str = request.POST.get('tag_list', '').strip()
     err_msg = None
+
+    if tag_str:
+        tag_list = [tag.lower() for tag in TAG_DELIMITER_RE.split(tag_str) if tag]
+    else:
+        tag_list = []
+
     if title and body:
         try:
             # TODO sanitize body to prevent XSS
             html_body = markdown.markdown(body)
-            article_id = g_db.insert_topic(title, html_body, [])
-            print(f'article id = {article_id}')
+            article_id = g_db.insert_topic(title, html_body, tag_list)
         except ValueError as ve:
             err_msg = ve.args[0]
         except db.DuplicateTitleException:
@@ -70,7 +80,7 @@ def insert_article():
             err_msg = 'body cannot be empty'
 
     if err_msg:
-        return template('new_article', err_msg=err_msg, body=body)
+        return template('new_article', err_msg=err_msg, body=body, tag_list=tag_list)
     return template('inserted_article', title=title, article_id=article_id)
 
 
@@ -80,17 +90,24 @@ def view_article(article_id):
     if article is None:
         title = f'Article with id {article_id} was not found.'
         body = ''
+        tag_list = []
     else:
         title = article.title
         body = article.body
-    return template('view_article', title=title, body=body)
+        tag_list = sorted([tag.name for tag in article.tags])
+    return template('view_article', title=title, body=body, tag_list=tag_list)
 
 
 @get('/search')
 def search_articles():
     title = request.GET.get('title', '').strip()
     body = request.GET.get('body', '').strip()
-    article_list = g_db.get_topic_list(title, body)
+    tag_list_str = request.GET.get('tags', '').strip()
+    if tag_list_str:
+        tag_list = [tag.lower() for tag in TAG_DELIMITER_RE.split(tag_list_str) if tag]
+    else:
+        tag_list = []
+    article_list = g_db.get_topic_list(title, body, tag_list)
     return template('article_list', article_list=article_list)
 
 

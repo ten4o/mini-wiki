@@ -1,9 +1,12 @@
 from sqlalchemy import create_engine, Column, Integer, Sequence, String
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import ARRAY, array_agg
+
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.schema import ForeignKey, Table
-from sqlalchemy.exc import IntegrityError
 
 from os import environ
 
@@ -93,7 +96,7 @@ class DB:
                 db_tags = {tag.name: tag for tag in session.query(
                     Tag).filter(Tag.name.in_(tag_list)).all()}
                 db_tags.update({tag_name: Tag(tag_name)
-                            for tag_name in tag_list if tag_name not in db_tags})
+                                for tag_name in tag_list if tag_name not in db_tags})
                 topic.tags.extend(db_tags.values())
                 session.add(topic)
                 session.commit()
@@ -126,7 +129,7 @@ class DB:
         with Session(self.engine) as session:
             return session.query(Topic).filter(Topic.title == title).first()
 
-    def get_topic_list(self, title: str, body: str) -> list[Topic]:
+    def get_topic_list(self, title: str, body: str, tag_list: list[str] = None) -> list[Topic]:
         """Search a topic by substring in the title and substring in the body
 
         Args:
@@ -142,4 +145,29 @@ class DB:
                 criterion.append(Topic.title.contains(title, autoescape=True))
             if body:
                 criterion.append(Topic.body.contains(body, autoescape=True))
+            if tag_list:
+                #
+                # match at least one tag
+                #
+                # return session.query(Topic).join(Topic.tags).filter(Tag.name.in_(tag_list)).all()
+
+                #
+                # match all tags
+                #
+
+                # make array containing the ids of the tags in tag_list
+                query_tag_id_list = session.query(array_agg(Tag.id)).filter(Tag.name.in_(tag_list))
+
+                # subquery with two columns: topic id , all its tag ids in array
+                topic_all_tags = select([
+                    Topic.id.label('topic_id'),
+                    array_agg(Tag.id).label('tagid_list')
+                ]).join(Topic.tags).group_by(Topic.id).alias('topic_all_tags')
+
+                # check that the list of the tags that we search for is a subset of the list of the tags of the topic
+                criterion.append(topic_all_tags.c.tagid_list.contains( query_tag_id_list ))
+
+                return session.query(Topic).join(topic_all_tags, topic_all_tags.c.topic_id == Topic.id
+                                                 ).filter(*criterion).all()
+            # implicit else
             return session.query(Topic).filter(*criterion).all()

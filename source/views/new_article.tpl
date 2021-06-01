@@ -13,6 +13,14 @@
             <label for="title" class="form-label">Article title</label>
             <input type="text" class="form-control" id="title" name="title" placeholder="Enter title">
         </div>
+        <div class="mb-3">
+            <label for="tags" class="form-label">Article tags</label>
+            % if defined('tag_list'):
+            %       tag_str = ', '.join(tag_list)
+            % else: tag_str = ''
+            % end
+            <input value="{{tag_str}}" type="text" class="form-control" id="tag_list" name="tag_list" placeholder="Enter list of tags">
+        </div>
     </div>
     <div class="col">
     </div>
