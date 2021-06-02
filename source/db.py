@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, Sequence, String
 from sqlalchemy import func, select
-from sqlalchemy.dialects.postgresql import ARRAY, array_agg
+from sqlalchemy.dialects.postgresql import array_agg
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
@@ -39,6 +39,13 @@ class Article(Base):
         tag_list = '[{}]'.format(','.join([tag.name for tag in self.tags]))
         return f'Article(id:{self.id} title:"{self.title}" body:"{self.body[:10]}" [{len(self.tags)}] {tag_list})'
 
+    @classmethod
+    def create(cls, aid:int, title:str, body:str, tag_name_list:list[str]):
+        a = cls(title=title, body=body)
+        a.id = aid
+        a.tags = [Tag(name) for name in tag_name_list]
+        return a
+
 
 class Tag(Base):
     """DB model of table tag"""
@@ -67,6 +74,11 @@ class DB:
 
         self.engine = create_engine(db_url, echo=True)
         Base.metadata.create_all(self.engine)
+
+        # we want intarray extension due to its operator & between arrays
+        with Session(self.engine) as session:
+            session.execute('CREATE EXTENSION IF NOT EXISTS intarray;')
+            session.commit();
 
     def drop_all(self):
         """Drops all DB tables"""
@@ -130,11 +142,13 @@ class DB:
             return session.query(Article).filter(Article.title == title).first()
 
     def get_article_list(self, title: str, body: str, tag_list: list[str] = None) -> list[Article]:
-        """Search an article by substring in the title and substring in the body
+        """Search articles by substring in the title and/or substring in the body
+           and/or if a supplied list of tags is a subset of the article's tags
 
         Args:
             title(str): a substring to search for in the title (Node: whitespace is not considered)
             body(str): a substring to search for in the body
+            tag_list(list[str]): list of tag names to search for
 
         Returns:
             list[Article]: list of article objects or [] if nothing found
@@ -155,19 +169,66 @@ class DB:
                 # match all tags
                 #
 
-                # make array containing the ids of the tags in tag_list
+                # make an array containing the ids of the tags in tag_list
                 query_tag_id_list = session.query(array_agg(Tag.id)).filter(Tag.name.in_(tag_list))
 
-                # subquery with two columns: article id , all its tag ids in array
+                # subquery with two columns: article id , all its tag ids in an array
                 article_all_tags = select([
                     Article.id.label('article_id'),
                     array_agg(Tag.id).label('tagid_list')
                 ]).join(Article.tags).group_by(Article.id).alias('article_all_tags')
 
-                # check that the list of the tags that we search for is a subset of the list of the tags of the article
+                # check that the list of tags that we search for is a subset of the list of tags of the article
                 criterion.append(article_all_tags.c.tagid_list.contains( query_tag_id_list ))
 
                 return session.query(Article).join(article_all_tags, article_all_tags.c.article_id == Article.id
                                                  ).filter(*criterion).all()
             # implicit else
             return session.query(Article).filter(*criterion).all()
+
+
+    def get_related(self, article_id: int, max_num: int)->list[Article]:
+        """Gets a list of related articles.
+
+        A related article is one that has at least one common tag with the specified article.
+        The result is a list of `Articles` sorted by the number of matches/hits.
+
+        Args:
+            article_id(int): the id of the specified article
+
+        Returns:
+            list[Article]: list of `Articles` sorted by the number of matches/hits or an empty list
+        """
+
+        # The following query is PostgreSQL specific. It uses operatar & from intarray extension.
+        #
+        query = r'''
+            SELECT article.id, article.title, article.body, tag_name_list
+            FROM article INNER JOIN (
+                SELECT article_id,
+                        COALESCE(ARRAY_LENGTH(tag_list & ( SELECT array_agg(tag_id) FROM article_tag WHERE article_id = :article_id), 1), 0) AS jaccard_index,
+                        tag_name_list
+                FROM (
+                        SELECT article_id, array_agg(tag_id ORDER BY tag_id) AS tag_list
+                                , array_agg(name ORDER BY name) AS tag_name_list
+                        FROM article_tag INNER JOIN tag ON tag.id = tag_id
+                        GROUP BY article_id
+                        HAVING article_id <> :article_id
+                    ) subquery1
+                ORDER BY jaccard_index DESC
+                LIMIT :max_num
+            ) subquery2
+            ON (article.id = article_id)
+            WHERE jaccard_index <> 0
+            ORDER BY jaccard_index DESC;
+        '''
+        article_list = []
+        with Session(self.engine) as session:
+            db_result = session.execute(query, {'article_id': article_id, 'max_num': max_num})
+
+            # convert the result set to a list of Article objects
+            for row in db_result:
+                a = Article.create(aid=row[0], title=row[1], body=row[2], tag_name_list=row[3])
+                article_list.append(a)
+
+        return article_list

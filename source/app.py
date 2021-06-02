@@ -6,6 +6,8 @@ import re
 import db
 from bottle import get, post, request, run, static_file, template, TEMPLATE_PATH
 
+MAX_RELATED_COUNT = 10
+
 WWW_ROOT = os.getenv('WWW_ROOT') or os.path.dirname(__file__)
 
 # make sure the template engine can find our views
@@ -97,10 +99,11 @@ def view_article(article_id):
         body = ''
         tag_list = []
     else:
+        related_list = g_db.get_related(article_id, MAX_RELATED_COUNT)
         title = article.title
         body = article.body
         tag_list = sorted([tag.name for tag in article.tags])
-    return template('view_article', title=title, body=body, tag_list=tag_list)
+    return template('view_article', title=title, body=body, tag_list=tag_list, related_list=related_list)
 
 
 @get('/search')

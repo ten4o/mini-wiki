@@ -128,6 +128,39 @@ class TestDb(unittest.TestCase):
         self.assertEqual(len(article_list), 2)
 
 
+    def test_get_related(self):
+        # insert 5 articles
+        titles = []
+        body_list = []
+        for i in range(5):
+            titles.append(f'test_get_related{i} title')
+            body_list.append(f'body test_get_related{i}')
+
+        tag_list_list = [
+            ['rtag1', 'rtag2'],
+            ['rtag2','rtag3', 'rtag4'],
+            ['rtag1', 'rtag3', 'rtag4'],
+            ['rtag10'],
+            ['rtag1', 'rtag4']
+        ]
+        last_id = 0
+        for title, body, tag_list in zip(titles, body_list, tag_list_list):
+            second_to_last_id = last_id
+            last_id = TestDb.db.insert_article(title, body, tag_list)
+
+        # get the list of related article for the last (5th) article
+        related_list = TestDb.db.get_related(last_id, 10)
+
+        # our id must not be in the result set
+        self.assertFalse(any(a.id == last_id for a in related_list))
+
+        # article with tag 'rtag10' must not be in the result set
+        self.assertFalse(any(a.id == second_to_last_id for a in related_list))
+
+        # the 3rd article must be the best match
+        self.assertArticle(related_list[0], titles[2], body_list[2], tag_list_list[2])
+
+
     @classmethod
     def setUpClass(cls):
         cls.db = db.DB(is_test=True)
