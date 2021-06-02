@@ -156,9 +156,9 @@ class DB:
         with Session(self.engine) as session:
             criterion = []
             if title:
-                criterion.append(Article.title.contains(title, autoescape=True))
+                criterion.append(func.lower(Article.title).contains(title.lower(), autoescape=True))
             if body:
-                criterion.append(Article.body.contains(body, autoescape=True))
+                criterion.append(func.lower(Article.body).contains(body.lower(), autoescape=True))
             if tag_list:
                 #
                 # match at least one tag

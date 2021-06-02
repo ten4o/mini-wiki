@@ -4,7 +4,7 @@ services:
   db:
     image: postgres
     volumes:
-      - ./data/test_db:/var/lib/postgresql/data
+      - ./data/prod_db:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -13,7 +13,7 @@ services:
       - "5432"
   web:
     build: .
-    command: python3 source/app.py
+    command:  /bin/bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; python3 source/app.py'
     volumes:
       - .:/home/app
     environment:
@@ -22,4 +22,3 @@ services:
       - "8081:8081"
     depends_on:
       - db
-

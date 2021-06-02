@@ -1,5 +1,6 @@
 % rebase('base.tpl', new_footer=False)
 
+% if article_list:
 % for article in article_list:
   <div class="card">
     <div class="card-body">
@@ -16,4 +17,7 @@
       </h6>
     </div>
   </div>
+% end
+% else:
+  Nothing appropriate found.
 % end
