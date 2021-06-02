@@ -19,6 +19,11 @@ g_db = db.DB()
 #
 # Static Routes
 #
+@get('/static/<filepath:re:.*\.(htm|html)>')
+def html(filepath):
+    return static_file(filepath, root=f'{WWW_ROOT}/static')
+
+
 @get('/static/css/<filepath:re:.*\.css>')
 def css(filepath):
     return static_file(filepath, root=f'{WWW_ROOT}/static/css')

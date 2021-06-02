@@ -18,6 +18,6 @@ function onTogglePreview(o) {
 
 function onInputChange() {
     if (g_preview_flag) {
-        g_preview.innerHTML = marked(g_body.value);
+        g_preview.contentDocument.body.innerHTML = marked(g_body.value);
     }
 }

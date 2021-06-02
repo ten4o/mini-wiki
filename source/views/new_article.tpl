@@ -42,9 +42,11 @@
     <div class="col">
         <textarea class="form-control" id="body" name="body" rows="32">{{body}}</textarea>
     </div>
-    <div class="col d-none" id="previewpane">
-        <div class="col" id="preview">
-        </div>
+    <div class="col d-none embed-responsive  embed-responsive-1by1" id="previewpane">
+        <noscript>
+            <h2>You'll need to enable Javascript to use this tool.</h2>
+        </noscript>
+        <iframe id="preview" class="embed-responsive-item w-100 h-100" src="/static/preview.html" sandbox="allow-same-origin allow-top-navigation-by-user-activation" allowfullscreen></iframe>
     </div>
 </div>
 <div class="row">

@@ -4,7 +4,9 @@
   <div class="card">
     <div class="card-body">
       <h5 class="card-title">
-        <a href="/view/{{article.id}}"><b>"{{article.title}}"</b></a>
+        <a href="/view/{{article.id}}" class="text-decoration-none">
+          <b>{{article.title}}</b>
+        </a>
       </h5>
       <h6 class="card-subtitle mb-2 text-muted">
         % tag_list = sorted([tag.name for tag in article.tags])
