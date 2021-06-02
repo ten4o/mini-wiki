@@ -68,7 +68,7 @@ def insert_article():
         try:
             # TODO sanitize body to prevent XSS
             html_body = markdown.markdown(body)
-            article_id = g_db.insert_topic(title, html_body, tag_list)
+            article_id = g_db.insert_article(title, html_body, tag_list)
         except ValueError as ve:
             err_msg = ve.args[0]
         except db.DuplicateTitleException:
@@ -86,7 +86,7 @@ def insert_article():
 
 @get('/view/<article_id:int>')
 def view_article(article_id):
-    article = g_db.get_topic_by_id(article_id)
+    article = g_db.get_article_by_id(article_id)
     if article is None:
         title = f'Article with id {article_id} was not found.'
         body = ''
@@ -107,7 +107,7 @@ def search_articles():
         tag_list = [tag.lower() for tag in TAG_DELIMITER_RE.split(tag_list_str) if tag]
     else:
         tag_list = []
-    article_list = g_db.get_topic_list(title, body, tag_list)
+    article_list = g_db.get_article_list(title, body, tag_list)
     return template('article_list', article_list=article_list)
 
 
