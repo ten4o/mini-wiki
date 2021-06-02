@@ -1,5 +1,6 @@
 from gevent import monkey; monkey.patch_all()
 
+import bleach
 import markdown
 import os
 import re
@@ -15,6 +16,36 @@ TEMPLATE_PATH.append(f'{WWW_ROOT}/views')
 
 # list of tag delimiters: | , ; - or white space
 TAG_DELIMITER_RE = re.compile(r'[|,;\-\s]')
+
+ALLOWED_TAGS = [
+    'ul',
+    'ol',
+    'li',
+    'p',
+    'pre',
+    'code',
+    'blockquote',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'hr',
+    'br',
+    'strong',
+    'em',
+    'a',
+    'img',
+    'table',
+    'thead',
+    'tbody',
+    'td',
+    'tr',
+    'th',
+]
+
+ALLOWED_ATTRIBUTES = {'a': ['href', 'title'], 'img': ['src', 'title', 'alt']}
 
 g_db = db.DB()
 
@@ -73,9 +104,11 @@ def insert_article():
 
     if title and body:
         try:
-            # TODO sanitize body to prevent XSS
             html_body = markdown.markdown(body)
-            article_id = g_db.insert_article(title, html_body, tag_list)
+
+            # sanitize body HTML to prevent XSS
+            sanitized_body = bleach.clean(html_body, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES)
+            article_id = g_db.insert_article(title, sanitized_body, tag_list)
         except ValueError as ve:
             err_msg = ve.args[0]
         except db.DuplicateTitleException:

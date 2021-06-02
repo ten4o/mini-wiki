@@ -4,3 +4,4 @@ bottle
 gevent
 markdown
 pytest
+bleach
