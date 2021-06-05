@@ -8,7 +8,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.schema import ForeignKey, Table
 
+from distutils.util import strtobool
 from os import environ
+
 
 MAX_TITLE_SIZE = 256
 MAX_TAG_SIZE = 32
@@ -16,9 +18,9 @@ MAX_TAG_SIZE = 32
 Base = declarative_base()
 
 article_tag_table = Table('article_tag', Base.metadata,
-                        Column('article_id', Integer, ForeignKey('article.id')),
-                        Column('tag_id', Integer, ForeignKey('tag.id'))
-                        )
+                          Column('article_id', Integer, ForeignKey('article.id')),
+                          Column('tag_id', Integer, ForeignKey('tag.id'))
+                          )
 
 
 class Article(Base):
@@ -40,7 +42,7 @@ class Article(Base):
         return f'Article(id:{self.id} title:"{self.title}" body:"{self.body[:10]}" [{len(self.tags)}] {tag_list})'
 
     @classmethod
-    def create(cls, aid:int, title:str, body:str, tag_name_list:list[str]):
+    def create(cls, aid: int, title: str, body: str, tag_name_list: list[str]):
         a = cls(title=title, body=body)
         a.id = aid
         a.tags = [Tag(name) for name in tag_name_list]
@@ -72,13 +74,15 @@ class DB:
         if is_test:
             db_url += '_TEST'
 
-        self.engine = create_engine(db_url, echo=True)
+        db_trace_on = environ.get('DATABASE_TRACE_ON')
+        db_echo = db_trace_on is not None and strtobool(db_trace_on)
+        self.engine = create_engine(db_url, echo=db_echo)
         Base.metadata.create_all(self.engine)
 
         # we want intarray extension due to its operator & between arrays
         with Session(self.engine) as session:
             session.execute('CREATE EXTENSION IF NOT EXISTS intarray;')
-            session.commit();
+            session.commit()
 
     def drop_all(self):
         """Drops all DB tables"""
@@ -179,15 +183,15 @@ class DB:
                 ]).join(Article.tags).group_by(Article.id).alias('article_all_tags')
 
                 # check that the list of tags that we search for is a subset of the list of tags of the article
-                criterion.append(article_all_tags.c.tagid_list.contains( query_tag_id_list ))
+                criterion.append(
+                    article_all_tags.c.tagid_list.contains(query_tag_id_list.scalar_subquery()))
 
                 return session.query(Article).join(article_all_tags, article_all_tags.c.article_id == Article.id
-                                                 ).filter(*criterion).all()
+                                                   ).filter(*criterion).all()
             # implicit else
             return session.query(Article).filter(*criterion).all()
 
-
-    def get_related(self, article_id: int, max_num: int)->list[Article]:
+    def get_related(self, article_id: int, max_num: int) -> list[Article]:
         """Gets a list of related articles.
 
         A related article is one that has at least one common tag with the specified article.

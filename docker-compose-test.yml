@@ -19,6 +19,7 @@ services:
       - .:/home/app
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db/postgres
+      - DATABASE_TRACE_ON=False
     ports:
       - "8081:8081"
     depends_on:
