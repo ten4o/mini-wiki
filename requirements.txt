@@ -3,5 +3,4 @@ SQLAlchemy
 bottle
 gevent
 markdown
-pytest
 bleach
