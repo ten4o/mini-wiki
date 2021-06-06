@@ -150,7 +150,7 @@ class DB:
            and/or if a supplied list of tags is a subset of the article's tags
 
         Args:
-            title(str): a substring to search for in the title (Node: whitespace is not considered)
+            title(str): a substring to search for in the title (Note: whitespace is not considered)
             body(str): a substring to search for in the body
             tag_list(list[str]): list of tag names to search for
 
@@ -204,7 +204,7 @@ class DB:
             list[Article]: list of `Articles` sorted by the number of matches/hits or an empty list
         """
 
-        # The following query is PostgreSQL specific. It uses operatar & from intarray extension.
+        # The following query is PostgreSQL specific. It uses operator & from intarray extension.
         #
         query = r'''
             SELECT article.id, article.title, article.body, tag_name_list
