@@ -7,7 +7,7 @@ from the root directory run:
 docker-compose up
 ```
 
-The web application will be accessable on http://localhost:8081
+The web application will be accessible at http://localhost:8081
 
 ### Features
 
@@ -17,9 +17,9 @@ The web application will be accessable on http://localhost:8081
 4. As a user I want to be able to easily go to pages that are related to the one I'm currently viewing
 5. As a user I want to be able to search for a given keyword in all wiki pages. I want to be able to search in the page title, the page content or both.
 
-### TODO/Areas of improvment
+### TODO/Areas of improvement
 
 - pagination - when the number of articles becomes too large
 - use tsquery for text search in secure way
-- cliens side and server side markdown compilers are different - that might lead to poorly formated HTML
+- client side and server side markdown compilers are different - that might lead to poorly formated HTML
 - more strict rules for tag names
