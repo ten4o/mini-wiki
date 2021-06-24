@@ -41,7 +41,6 @@ class TestDb(unittest.TestCase):
         except DuplicateTitleException:
             pass
 
-
     def test_insert_dup_tags(self):
         title = 'title 2'
         body = 'body 2'
@@ -79,7 +78,7 @@ class TestDb(unittest.TestCase):
 
         # there must be at least 3 articles
         self.assertIsNotNone(article_list)
-        self.assertGreater(len(article_list), 2);
+        self.assertGreater(len(article_list), 2)
 
         # check if our articles are in the result
         for check_title, check_body in zip(titles, body):
@@ -87,7 +86,7 @@ class TestDb(unittest.TestCase):
             self.assertArticle(article, check_title, check_body, None)
 
         # search for article by a substring in the title
-        article_list = TestDb.db.get_article_list(title = 'list2', body = None)
+        article_list = TestDb.db.get_article_list(title='list2', body=None)
         self.assertIsNotNone(article_list)
 
         # there must be only one article in the result
@@ -95,7 +94,7 @@ class TestDb(unittest.TestCase):
         self.assertArticle(article_list[0], titles[1], body[1], tag_list[:3])
 
         # search for article by a substring in the title and in the body
-        article_list = TestDb.db.get_article_list(title = 'title', body = 'body1')
+        article_list = TestDb.db.get_article_list(title='title', body='body1')
         self.assertIsNotNone(article_list)
 
         # there must be only one article in the result
@@ -103,30 +102,29 @@ class TestDb(unittest.TestCase):
         self.assertArticle(article_list[0], titles[0], body[0], tag_list[:2])
 
         # search of non-existing article
-        article_list = TestDb.db.get_article_list(title = 'None-existing', body = None)
+        article_list = TestDb.db.get_article_list(title='None-existing', body=None)
 
         # the result must be an empty list
         self.assertEqual(len(article_list), 0)
 
         # check that escaping works
-        article_list = TestDb.db.get_article_list(title = '%_', body = None)
+        article_list = TestDb.db.get_article_list(title='%_', body=None)
         self.assertEqual(len(article_list), 0)
-        article_list = TestDb.db.get_article_list(title = '%', body = None)
+        article_list = TestDb.db.get_article_list(title='%', body=None)
         self.assertEqual(len(article_list), 0)
-        article_list = TestDb.db.get_article_list(title = '__', body = None)
+        article_list = TestDb.db.get_article_list(title='__', body=None)
         self.assertEqual(len(article_list), 0)
 
         # search by a list of tags
 
-        article_list = TestDb.db.get_article_list(None, None, ['tag1','tag2', 'tag3', 'tag4'])
+        article_list = TestDb.db.get_article_list(None, None, ['tag1', 'tag2', 'tag3', 'tag4'])
         self.assertIsNotNone(article_list)
         self.assertEqual(len(article_list), 1)
         self.assertArticle(article_list[0], titles[2], body[2], tag_list[:4])
 
-        article_list = TestDb.db.get_article_list(None, None, ['tag1','tag3'])
+        article_list = TestDb.db.get_article_list(None, None, ['tag1', 'tag3'])
         self.assertIsNotNone(article_list)
         self.assertEqual(len(article_list), 2)
-
 
     def test_get_related(self):
         # insert 5 articles
@@ -138,7 +136,7 @@ class TestDb(unittest.TestCase):
 
         tag_list_list = [
             ['rtag1', 'rtag2'],
-            ['rtag2','rtag3', 'rtag4'],
+            ['rtag2', 'rtag3', 'rtag4'],
             ['rtag1', 'rtag3', 'rtag4'],
             ['rtag10'],
             ['rtag1', 'rtag4']
@@ -159,7 +157,6 @@ class TestDb(unittest.TestCase):
 
         # the 3rd article must be the best match
         self.assertArticle(related_list[0], titles[2], body_list[2], tag_list_list[2])
-
 
     @classmethod
     def setUpClass(cls):

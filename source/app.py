@@ -1,4 +1,4 @@
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey; monkey.patch_all()  # noqa: E702
 
 import bleach
 import markdown
@@ -49,30 +49,31 @@ ALLOWED_ATTRIBUTES = {'a': ['href', 'title'], 'img': ['src', 'title', 'alt']}
 
 g_db = db.DB()
 
+
 #
 # Static Routes
 #
-@get('/static/<filepath:re:.*\.(htm|html)>')
+@get('/static/<filepath:re:.*\\.(htm|html)>')
 def html(filepath):
     return static_file(filepath, root=f'{WWW_ROOT}/static')
 
 
-@get('/static/css/<filepath:re:.*\.css>')
+@get('/static/css/<filepath:re:.*\\.css>')
 def css(filepath):
     return static_file(filepath, root=f'{WWW_ROOT}/static/css')
 
 
-@get('/static/font/<filepath:re:.*\.(eot|otf|svg|ttf|woff|woff2?)>')
+@get('/static/font/<filepath:re:.*\\.(eot|otf|svg|ttf|woff|woff2?)>')
 def font(filepath):
     return static_file(filepath, root=f'{WWW_ROOT}/static/font')
 
 
-@get('/static/img/<filepath:re:.*\.(jpg|png|gif|ico|svg)>')
+@get('/static/img/<filepath:re:.*\\.(jpg|png|gif|ico|svg)>')
 def img(filepath):
     return static_file(filepath, root=f'{WWW_ROOT}/static/img')
 
 
-@get('/static/js/<filepath:re:.*\.js>')
+@get('/static/js/<filepath:re:.*\\.js>')
 def js(filepath):
     return static_file(filepath, root=f'{WWW_ROOT}/static/js')
 
